@@ -1,0 +1,37 @@
+{
+  "title": "DevOps Final — приложение",
+  "uid": "devops-final-app",
+  "schemaVersion": 39,
+  "time": { "from": "now-30m", "to": "now" },
+  "refresh": "10s",
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Приложение доступно (up)",
+      "gridPos": { "x": 0, "y": 0, "w": 6, "h": 6 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "up{job=\"app\"}", "refId": "A" }]
+    },
+    {
+      "type": "stat",
+      "title": "Всего запросов",
+      "gridPos": { "x": 6, "y": 0, "w": 6, "h": 6 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "sum(http_requests_total)", "refId": "A" }]
+    },
+    {
+      "type": "timeseries",
+      "title": "Запросов в секунду по маршрутам",
+      "gridPos": { "x": 12, "y": 0, "w": 12, "h": 12 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "sum by (route) (rate(http_requests_total[1m]))", "legendFormat": "{{route}}", "refId": "A" }]
+    },
+    {
+      "type": "timeseries",
+      "title": "Память процесса, МБ",
+      "gridPos": { "x": 0, "y": 6, "w": 12, "h": 6 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "process_resident_memory_bytes{job=\"app\"} / 1024 / 1024", "refId": "A" }]
+    }
+  ]
+}

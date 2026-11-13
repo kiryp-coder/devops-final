@@ -1,0 +1,69 @@
+- name: Развернуть devops-final на localhost
+  hosts: local
+  become: true
+
+  vars:
+    project_dir: /opt/devops-final
+    source_dir: "{{ playbook_dir }}/.."
+
+  tasks:
+    - name: Проверить, установлен ли Docker
+      command: docker --version
+      register: docker_check
+      changed_when: false
+      failed_when: false
+
+    - name: Установить Docker, если его нет
+      apt:
+        name:
+          - docker.io
+          - docker-compose-v2
+        state: present
+        update_cache: true
+      when: docker_check.rc != 0
+
+    - name: Создать директорию проекта
+      file:
+        path: "{{ project_dir }}"
+        state: directory
+        mode: "0755"
+
+    - name: Скопировать docker-compose.yml
+      copy:
+        src: "{{ source_dir }}/docker-compose.yml"
+        dest: "{{ project_dir }}/docker-compose.yml"
+        mode: "0644"
+
+    - name: Скопировать prometheus.yml
+      copy:
+        src: "{{ source_dir }}/prometheus.yml"
+        dest: "{{ project_dir }}/prometheus.yml"
+        mode: "0644"
+
+    - name: Скопировать настройки Grafana
+      copy:
+        src: "{{ source_dir }}/grafana/"
+        dest: "{{ project_dir }}/grafana/"
+        mode: "0644"
+        directory_mode: "0755"
+
+    - name: Запустить стек docker compose up -d
+      command: docker compose up -d
+      args:
+        chdir: "{{ project_dir }}"
+      register: compose_result
+      changed_when: >-
+        'Created' in compose_result.stderr or
+        'Recreated' in compose_result.stderr or
+        'Started' in compose_result.stderr
+
+    - name: Показать состояние контейнеров
+      command: docker compose ps --format "{{ '{{' }}.Service{{ '}}' }} {{ '{{' }}.State{{ '}}' }}"
+      args:
+        chdir: "{{ project_dir }}"
+      register: compose_status
+      changed_when: false
+
+    - name: Вывести состояние
+      debug:
+        var: compose_status.stdout_lines
